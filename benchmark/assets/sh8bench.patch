@@ -1,0 +1,97 @@
+--- /app/mimalloc-bench/bench/shbench/sh8bench-new.c	2023-11-27 16:49:26.675414280 +0000
++++ /app/mimalloc-bench/bench/shbench/SH8BENCH.C	2023-11-27 16:37:20.821781227 +0000
+@@ -135,7 +135,7 @@
+ FILE *fout, *fin;
+ unsigned uMaxBlockSize = 1000;
+ unsigned uMinBlockSize = 1;
+-unsigned long ulIterations   =  700000;
++unsigned long ulIterations   =  100000;
+ unsigned long ulHeapSize     = 1000000;
+ unsigned ulForeignAllocCount = 10000000;
+ 
+@@ -191,16 +191,7 @@
+ 	setbuf(stdout, NULL);  /* turn off buffering for output */
+ 
+ 	/* @@@ change to use flags specifying which parms are passed */
+-	#ifdef BENCH
+-		fin = stdin;
+-		fout = stdout;
+-	  unsigned int defaultThreadCount = GetNumProcessors();
+-		if (argc==2) {
+-			char* end;
+-			long l = strtol(argv[1],&end,10);
+-			if (l != 0) defaultThreadCount = l;
+-		}
+-	#else
++	
+ 	if (argc > 1)
+ 		fin = fopen(argv[1], "r");
+ 	else
+@@ -209,7 +200,7 @@
+ 		fout = fopen(argv[2], "w");
+ 	else
+ 		fout = stdout;		
+-	#endif
++	
+ 	if (argc > 3)
+ 		ulHeapSize = atol(argv[3]);
+ 	else
+@@ -224,7 +215,7 @@
+ 	if (argc > 5)
+ 		ulThreadCount = atol(argv[5]);
+ 	else
+-		ulThreadCount = promptAndRead("threads", defaultThreadCount, 'u');
++		ulThreadCount = promptAndRead("threads", ulThreadCount, 'u');
+ 
+ 	if (argc > 6)
+ 		ulForeignAllocCount = atol(argv[5]);
+@@ -249,7 +240,7 @@
+ 		void *threadArg = NULL;
+ 
+ #ifdef WIN32
+-		unsigned uCPUs = promptAndRead("CPUs (0 for all)", GetNumProcessors(), 'u');
++		unsigned uCPUs = promptAndRead("CPUs (0 for all)", 0, 'u');
+ 
+ 		if (uCPUs)
+ 		{
+@@ -458,7 +449,7 @@
+ 	if (!memory)
+ 	{
+ 		printf("\nout of memory");
+-		_exit(1);
++		return;
+ 	}
+ 	
+ 	while (iterations--)
+@@ -548,14 +539,11 @@
+ 
+ 				mp = memory;
+ 			}
+-			else {
+-				if (!(*mp++ = (char *)malloc(size)))
++			else if (!(*mp++ = (char *)malloc(size)))
+ 			{
+ 				printf("Out of memory\n");
+ 				_exit (1);
+ 			}			
+-				char* p = mp[-1]; p[0] = 0; p[size-1] = 0;
+-			}
+ 		}
+ 	}
+ 
+@@ -589,7 +577,6 @@
+ {
+ 	char *arg = NULL, *err;
+ 	unsigned long result;
+-#ifndef BENCH
+ 	{
+ 		char buf[12];
+ 		static char fmt[] = "\n%s [%lu]: ";
+@@ -598,7 +585,6 @@
+ 		if (fgets(buf, 11, fin))
+ 			arg = &buf[0];
+ 	}
+-#endif
+ 	if (arg && ((result = strtoul(arg, &err, 10)) != 0
+ 					|| (*err == '\n' && arg != err)))
+ 	{
